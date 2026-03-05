@@ -36,7 +36,10 @@ typedef struct
     Node *tail;
 } LRUCache;
 
+uint32_t djb2_hash(const char *str);
+Node *create_node(const char *key, void *value);
 Node *hash_get(HashTable *table, const char *key);
+void hash_table_insert(HashTable *table, Node *node);
 void hash_table_remove(HashTable *table, const char *key);
 
 void detach_node(Node *node);

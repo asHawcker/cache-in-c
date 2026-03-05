@@ -2,6 +2,32 @@
 #include "cache.h"
 #include <time.h>
 
+uint32_t djb2_hash(const char *str)
+{
+    uint32_t hash = 5381;
+    int c;
+    while ((c = *str++))
+    {
+        hash = ((hash << 5) + hash) + c; /* hash * 33 + c */
+    }
+    return hash;
+}
+
+Node *create_node(const char *key, void *value)
+{
+    Node *node = malloc(sizeof(Node));
+
+    node->key = malloc(strlen(key) + 1);
+    strcpy(node->key, key);
+
+    node->value = value;
+    node->prev = NULL;
+    node->next = NULL;
+    node->expiry_time = 0;
+
+    return node;
+}
+
 Node *hash_get(HashTable *table, const char *key)
 {
     uint32_t hash = djb2_hash(key);
@@ -20,6 +46,25 @@ Node *hash_get(HashTable *table, const char *key)
     }
     return NULL;
 }
+
+void hash_table_insert(HashTable *table, Node *node)
+{
+    uint32_t hash = djb2_hash(node->key);
+    int index = hash % table->capacity;
+
+    while (table->buckets[index] != EMPTY && table->buckets[index] != TOMBSTONE)
+    {
+        if (strcmp(table->buckets[index]->key, node->key) == 0)
+        {
+            break;
+        }
+        index = (index + 1) % table->capacity;
+    }
+
+    table->buckets[index] = node;
+    table->count++;
+}
+
 void hash_table_remove(HashTable *table, const char *key)
 {
     uint32_t hash = djb2_hash(key);
