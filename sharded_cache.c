@@ -20,6 +20,8 @@ void sharded_init(ShardedCache *s_cache, int total_capacity, int num_shards)
         pthread_mutex_init(s_cache->locks + i, NULL);
         lru_init(s_cache->shards + i, capacity_per_shard);
     }
+    atomic_init(&s_cache->hits, 0);
+    atomic_init(&s_cache->misses, 0);
 }
 
 void *sharded_get(ShardedCache *s_cache, const char *key)
@@ -30,6 +32,16 @@ void *sharded_get(ShardedCache *s_cache, const char *key)
     pthread_mutex_lock(s_cache->locks + shard_idx);
     result = lru_cache_get(s_cache->shards + shard_idx, key);
     pthread_mutex_unlock(s_cache->locks + shard_idx);
+
+    if (result != NULL)
+    {
+        atomic_fetch_add_explicit(&s_cache->hits, 1, memory_order_relaxed);
+    }
+    else
+    {
+        atomic_fetch_add_explicit(&s_cache->misses, 1, memory_order_relaxed);
+    }
+
     return result;
 }
 

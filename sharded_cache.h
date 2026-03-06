@@ -1,11 +1,15 @@
 #include <pthread.h>
 #include "cache.h"
+#include <stdatomic.h>
 
 typedef struct
 {
     LRUCache *shards;
     pthread_mutex_t *locks;
     int num_shards;
+
+    _Atomic uint64_t misses;
+    _Atomic uint64_t hits;
 } ShardedCache;
 
 int get_shard_index(ShardedCache *cache, const char *key);
