@@ -1,6 +1,7 @@
 #include <stdint.h>
 #include "cache.h"
 #include <time.h>
+#include <string.h>
 
 uint32_t djb2_hash(const char *str)
 {
@@ -91,17 +92,17 @@ void detach_node(Node *node)
     node->next->prev = node->prev;
 }
 
+uint64_t current_time_sec()
+{
+    return (uint64_t)time(NULL);
+}
+
 void push_front(LRUCache *cache, Node *node)
 {
     node->next = cache->head->next;
     node->prev = cache->head;
     cache->head->next->prev = node;
     cache->head->next = node;
-}
-
-uint64_t current_time_sec()
-{
-    return (uint64_t)time(NULL);
 }
 
 void lru_cache_delete_node(LRUCache *cache, Node *node)
@@ -183,4 +184,38 @@ void lru_cache_put(LRUCache *cache, const char *key, void *value, uint64_t ttl_s
     push_front(cache, new_node);
     hash_table_insert(cache->hash_table, new_node);
     cache->current_size++;
+}
+
+void lru_destroy(LRUCache *cache)
+{
+    if (cache == NULL)
+        return;
+
+    Node *curr = cache->head;
+    while (curr != NULL)
+    {
+        Node *next = curr->next;
+
+        if (curr != cache->head && curr != cache->tail)
+        {
+            free(curr->key);
+
+            // Note: DO NOT free(curr->value). The user is responsible for freeing the actual data. If we freed it here, we might crash their program.
+        }
+        free(curr);
+
+        curr = next;
+    }
+
+    if (cache->hash_table != NULL)
+    {
+        free(cache->hash_table->buckets);
+        free(cache->hash_table);
+    }
+
+    cache->head = NULL;
+    cache->tail = NULL;
+    cache->hash_table = NULL;
+    cache->capacity = 0;
+    cache->current_size = 0;
 }

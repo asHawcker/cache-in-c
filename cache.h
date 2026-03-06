@@ -43,8 +43,11 @@ void hash_table_insert(HashTable *table, Node *node);
 void hash_table_remove(HashTable *table, const char *key);
 
 void detach_node(Node *node);
-void push_front(LRUCache *cache, Node *node);
+uint64_t current_time_sec();
 
+void push_front(LRUCache *cache, Node *node);
+void lru_cache_delete_node(LRUCache *cache, Node *node);
 void lru_init(LRUCache *cache, int capacity);
 void *lru_cache_get(LRUCache *cache, const char *key);
 void lru_cache_put(LRUCache *cache, const char *key, void *value, uint64_t ttl_seconds);
+void lru_destroy(LRUCache *cache);
